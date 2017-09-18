@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { GameInfo, Board, PlayerSquare} from 'components';
-import { UP, DOWN, LEFT, RIGHT } from 'helpers/constants';
-import url from 'api';
-
+import GameInfo from './components/GameInfo';
+import PlayerSquare from './components/PlayerSquare';
+import Board from './components/Board';
+import { UP, DOWN, LEFT, RIGHT } from './helpers/constants';
+import { pluck } from './helpers/utils'
 const getDefaultState = ({ boardSize, squareSize, highScore = 0 }) => {
-    const half = Math.floor(boardSize / 2) * playerSize;
+    const half = Math.floor(boardSize / 2) * squareSize;
     return {
         size: {
             board: boardSize,
@@ -30,64 +31,92 @@ export default class Game extends Component {
         const half = Math.floor(props.boardSize / 2) * props.squareSize;
         const { boardSize, squareSize } = props;
         this.state = getDefaultState({ boardSize, squareSize })
+        this.moveSquare = this.moveSquare.bind(this);
+        this.updateSquarePosition = this.updateSquarePosition.bind(this)
     }
 
-    pluck = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    moveSquare = () => {
-        const { square, maxDim } = this.state.size;
-        const squarePosition = this.state.squarePosition;
 
-        // assign to a random side
+    moveSquare() {
         const newDirection = pluck([UP, DOWN, LEFT, RIGHT]);
+        debugger;
 
-        // generate enemy object
-        this.updateSquarePosition(squarePos, side);
+        // update new direction
+        this.updateSquarePosition(newDirection);
 
     }
 
 
 
-    updateSquarePosition = (dirObj) => {
+    updateSquarePosition = (direction) => {
         const { top, left } = this.state.squarePosition;
         const { square, maxDim } = this.state.size;
+        const squareSpeed = this.state.squareSpeed ;
+        let newDirection;
+        debugger;
 
         // check walls
-        switch (dirObj.dir) {
+        switch (direction) {
             case UP:
-                if (top === 0) return;
+                if (top === 0) {
+                    return
+                } else {
+                    newDirection = { top: top + squareSpeed, left: left };
+                };
                 break;
             case DOWN:
-                if (top === maxDim - square) return;
+                if (top === maxDim - square) {
+                    return
+                } else {
+                    newDirection = { top: top - squareSpeed, left: left };
+                };
                 break;
             case LEFT:
-                if (left === 0) return;
+                if (left === 0) {
+                    return
+                } else {
+                    newDirection = { top: top, left: left - squareSpeed };
+                };
                 break;
             case RIGHT:
-                if (left === maxDim - square) return;
+                if (left === maxDim - square){
+                    return
+                } else {
+                    newDirection = { top: top , left: left + squareSpeed };
+                };
                 break;
         }
 
+        debugger;
+
+
+
         this.setState({
             squarePosition: {
-                top: top + (square * dirObj.top),
-                left: left + (square * dirObj.left)
+                top: newDirection.top,
+                left: newDirection.left
             }
         });
     }
 
-    handleMouseEnter = (e) => {
+    handleMouseEnter() {
+        debugger;
         this.startGame()
 
     }
 
-    handleMouseLeave = () => {
+    handleMouseLeave(){
         this.resetGame();
     }
 
     startGame = () => {
-        this.timeInterval = setInterval(this.updateGame, 1000);
-        this.gameInterval = setInterval(this.updateSquarePosition, 250);
+        debugger;
+        let timeInterval = setInterval(this.updateGame, 1000);
+        let gameInterval = setInterval(this.moveSquare, 1000);
+        this.setState({
+            timeInterval,
+            gameInterval
+        })
     }
 
     updateGame = () => {
@@ -98,7 +127,7 @@ export default class Game extends Component {
         if (timeElapsed > 0) {
 
             // increment square speed
-            if (timeElapsed % 3 === 0) {
+            if (timeElapsed % 10 === 0) {
                 this.incrementSquareSpeed();
             }
         }
@@ -118,7 +147,7 @@ export default class Game extends Component {
         const { squareSpeed } = this.state;
 
         this.setState({
-            squareSpeed: parseFloat((squareSpeed + 0.25).toFixed(2))
+            squareSpeed: parseFloat((squareSpeed + 0.01).toFixed(2))
         });
     }
 
@@ -126,9 +155,12 @@ export default class Game extends Component {
         const { boardSize, squareSize } = this.props;
         const { playerScore, highScore, globalHighScore, debug } = this.state;
 
+        alert("Oh No! You got off the box!");
+
+
         // clear intervals
-        clearInterval(this.gameInterval);
-        clearInterval(this.timeInterval);
+        clearInterval(this.state.gameInterval);
+        clearInterval(this.state.timeInterval);
 
         // if high score is higher than global high score, update it
         if (playerScore > globalHighScore) {
@@ -192,6 +224,7 @@ export default class Game extends Component {
             playerScore,
             timeElapsed,
             highScore,
+            squareSpeed,
             globalHighScore
             } = this.state;
 
@@ -204,14 +237,13 @@ export default class Game extends Component {
                     globalHighScore={globalHighScore} />
 
                 <Board dimension={board * square}>
-                    <Player
+                    <PlayerSquare
                         size={square}
-                        position={squarePosition}
-                        handleMouseEnter={this.handleMouseEnter}
-                        handleMouseLeave={this.handleMouseLeave}/>
+                        squarePosition={squarePosition}
+                        squareSpeed={squareSpeed}
+                        handleMouseEnter={this.handleMouseEnter.bind(this)}
+                        handleMouseLeave={this.handleMouseLeave.bind(this)}/>
                 </Board>
-                {false && <p style={{ position: 'fixed', bottom: 0, left: 16 }}>Debug: <input type="checkbox" onChange={this.handleDebugToggle} ref={ n => this.debug = n }/></p>}
-                {this.state.debug && <DebugState data={this.state} />}
             </div>
         )
     }

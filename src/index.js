@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './Game';
+import Game from './Game';
 import registerServiceWorker from './registerServiceWorker';
 
-ReactDOM.render(<Game />, document.getElementById('root'));
+ReactDOM.render(<Game boardSize={11} squareSize={25} />, document.getElementById('root'));
 registerServiceWorker();
